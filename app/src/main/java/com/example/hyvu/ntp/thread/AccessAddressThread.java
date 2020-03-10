@@ -30,6 +30,7 @@ public class AccessAddressThread implements Runnable {
         AccessNTP(address);
     }
 
+    // TODO declare modifier
     @RequiresApi(api = Build.VERSION_CODES.M)
     void AccessNTP(String address) {
         ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(CONNECTIVITY_SERVICE);

@@ -1,5 +1,6 @@
 package com.example.hyvu.ntp.view.activity;
 
+// TODO organize import
 import android.net.ConnectivityManager;
 import android.os.Build;
 import android.support.annotation.RequiresApi;
@@ -24,11 +25,13 @@ import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
 
+    // TODO declare modifiers
     final static int corePoolSize=3;
     final static int maxPoolSize=4;
     final static int queneCapacity=5;
 
     long now;
+    // TODO camel case
     TextView tv_timeSystem;
     TextView tv_NTP;
     SntpClient sntpClient;
@@ -39,20 +42,28 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        //
+
+        // TODO constants should not be defined here
         final String[] address={"2.vn.pool.ntp.org","0.asia.pool.ntp.org","1.asia.pool.ntp.org"};
+
+        // TODO spacing
         tv_timeSystem=findViewById(R.id.textView_systemTime);
         tv_NTP=findViewById(R.id.textView_timeNTP);
         sntpClient = new SntpClient();
 
+        // TODO line break
         ThreadPoolExecutor threadPoolExecutor=new ThreadPoolExecutor(corePoolSize,maxPoolSize,1000,TimeUnit.MILLISECONDS,new LinkedBlockingDeque<Runnable>(queneCapacity));
+        // TODO read the warning
         for(int i=0;i<address.length;i++) {
             threadPoolExecutor.execute(new AccessAddressThread(sntpClient, address[i], getApplicationContext()));
         }
+
+        // TODO are you serious?
         while(true) {
             if (threadPoolExecutor.getCompletedTaskCount() > 0) {
                 threadPoolExecutor.shutdownNow();
                 now = sntpClient.getNtpTime();
+                // TODO read the warning
                 SimpleDateFormat df = new SimpleDateFormat("h:mm");
                 tv_NTP.setText(df.format(now));
                 Date date = Calendar.getInstance().getTime();
