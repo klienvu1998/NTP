@@ -1,40 +1,33 @@
 package com.example.hyvu.ntp.view.activity;
 
-// TODO organize import
-import android.net.ConnectivityManager;
 import android.os.Build;
+import android.os.Bundle;
 import android.support.annotation.RequiresApi;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
-import android.widget.Toast;
-
 import com.example.hyvu.ntp.R;
 import com.example.hyvu.ntp.thread.AccessAddressThread;
 import com.example.hyvu.ntp.util.SntpClient;
-
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.Locale;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
 
-    // TODO declare modifiers
-    final static int corePoolSize=3;
-    final static int maxPoolSize=4;
-    final static int queneCapacity=5;
+    private final static String[] ADDRESS = {"2.vn.pool.ntp.org", "0.asia.pool.ntp.org", "1.asia.pool.ntp.org"};
+    private final static int COREPOOLSIZE = 3;
+    private final static int MAXPOOLSIZE = 4;
+    private final static int QUENECAPACITY = 5;
 
-    long now;
-    // TODO camel case
-    TextView tv_timeSystem;
-    TextView tv_NTP;
-    SntpClient sntpClient;
+    private long now;
+    private TextView textViewTimeSystem;
+    private TextView textViewNtp;
+    public SntpClient[] sntpClient;
 
 
     @RequiresApi(api = Build.VERSION_CODES.M)
@@ -42,35 +35,34 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-
-        // TODO constants should not be defined here
-        final String[] address={"2.vn.pool.ntp.org","0.asia.pool.ntp.org","1.asia.pool.ntp.org"};
-
-        // TODO spacing
-        tv_timeSystem=findViewById(R.id.textView_systemTime);
-        tv_NTP=findViewById(R.id.textView_timeNTP);
-        sntpClient = new SntpClient();
-
-        // TODO line break
-        ThreadPoolExecutor threadPoolExecutor=new ThreadPoolExecutor(corePoolSize,maxPoolSize,1000,TimeUnit.MILLISECONDS,new LinkedBlockingDeque<Runnable>(queneCapacity));
-        // TODO read the warning
-        for(int i=0;i<address.length;i++) {
-            threadPoolExecutor.execute(new AccessAddressThread(sntpClient, address[i], getApplicationContext()));
+        AccessAddressThread.finished = false;
+        Log.d("onCreate"," Created");
+        textViewTimeSystem = findViewById(R.id.textView_systemTime);
+        textViewNtp = findViewById(R.id.textView_timeNTP);
+        sntpClient = new SntpClient[3];
+        for(int i=0;i<3;i++){
+            sntpClient[i]=new SntpClient();
         }
+        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
+                COREPOOLSIZE,
+                MAXPOOLSIZE,
+                1000,
+                TimeUnit.MILLISECONDS,
+                new LinkedBlockingDeque<Runnable>(QUENECAPACITY));
 
-        // TODO are you serious?
-        while(true) {
-            if (threadPoolExecutor.getCompletedTaskCount() > 0) {
-                threadPoolExecutor.shutdownNow();
-                now = sntpClient.getNtpTime();
-                // TODO read the warning
-                SimpleDateFormat df = new SimpleDateFormat("h:mm");
-                tv_NTP.setText(df.format(now));
-                Date date = Calendar.getInstance().getTime();
-                tv_timeSystem.setText(df.format(date));
-                break;
-            }
+        for (int i=0;i< sntpClient.length;i++) {
+            threadPoolExecutor.execute(new AccessAddressThread(sntpClient[i], ADDRESS[i], getApplicationContext(), new AccessAddressThread.NtpListener() {
+                @Override
+                public void returnNtpTime(long time) {
+                    now = time;
+                    SimpleDateFormat df = new SimpleDateFormat("h:mm", Locale.US);
+                    textViewNtp.setText(df.format(now));
+                    Date date = Calendar.getInstance().getTime();
+                    textViewTimeSystem.setText(df.format(date));
+                }
+            }));
         }
+        threadPoolExecutor.shutdown();
 //        Thread thread = new Thread(){
 //            @Override
 //            public void run() {
@@ -122,11 +114,8 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-//    @RequiresApi(api = Build.VERSION_CODES.M)
-//    void AccessNTP(String address) {
-//        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
-//        sntpClient.requestTime(address, 3000, connectivityManager.getActiveNetwork());
-//    }
-
-
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
 }
